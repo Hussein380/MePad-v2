@@ -1,0 +1,5 @@
+# user_data.csv
+
+# Define csv file structue with column headers
+
+CSV_HEADER = ['name', 'gender',  'age', 'location']
