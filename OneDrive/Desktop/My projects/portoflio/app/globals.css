@@ -66,19 +66,11 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border !scroll-smooth;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  button {
-    @apply active:outline-none;
-  }
-}
-
 @layer utilities {
+  .border-border {
+    border-color: var(--border);
+  }
+
   .heading {
     @apply font-bold text-4xl md:text-5xl text-center;
   }
