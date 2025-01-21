@@ -11,7 +11,11 @@ connectDB();
 
 // CORS configuration
 const corsOptions = {
-    origin: ['https://your-frontend-url.vercel.app', 'http://localhost:3000'],
+    origin: [
+        'http://localhost:3000',
+        'https://me-pad-v2-isiu.vercel.app',
+        'https://me-pad-v2-huznigarane-gmailcoms-projects.vercel.app'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
