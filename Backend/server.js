@@ -13,8 +13,8 @@ connectDB();
 const corsOptions = {
     origin: [
         'http://localhost:3000',
-        'https://me-pad-v2-isiu.vercel.app',
-        'https://me-pad-v2-huznigarane-gmailcoms-projects.vercel.app'
+        'https://your-frontend-url.vercel.app',
+        'https://your-backend-url.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
