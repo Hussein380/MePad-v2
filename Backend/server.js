@@ -13,8 +13,7 @@ connectDB();
 const corsOptions = {
     origin: [
         'http://localhost:3000',
-        'https://your-frontend-url.vercel.app',
-        'https://your-backend-url.vercel.app'
+        'https://mepad-frontend.vercel.app'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
