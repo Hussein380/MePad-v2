@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://me-pad-v2-huznigarane-gmailcoms-projects.vercel.app',
+        target: 'https://me-pad-v2.vercel.app',
         changeOrigin: true,
         secure: false,
       },
