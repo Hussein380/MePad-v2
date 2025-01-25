@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
             throw new Error('Invalid response format');
         } catch (error) {
             console.error('AuthContext login error:', error);
-            throw error;
+            throw new Error(error.response?.data?.message || 'Login failed');
         }
     };
 

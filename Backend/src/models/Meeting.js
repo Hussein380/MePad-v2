@@ -6,8 +6,8 @@ const actionPointSchema = new mongoose.Schema({
         required: true
     },
     assignedTo: {
-        type: String,
-        required: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     },
     dueDate: {
         type: Date,
@@ -23,7 +23,9 @@ const actionPointSchema = new mongoose.Schema({
 const meetingSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Please add a title']
+        required: [true, 'Please add a title'],
+        trim: true,
+        maxlength: [50, 'Title cannot be more than 50 characters']
     },
     date: {
         type: Date,
@@ -33,20 +35,20 @@ const meetingSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a venue']
     },
-    participants: [{
-        name: String,
-        email: String
-    }],
     summary: {
         type: String,
         required: [true, 'Please add a summary']
     },
-    actionPoints: [actionPointSchema],
+    participants: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     createdBy: {
-        type: mongoose.Schema.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    }
+    },
+    actionPoints: [actionPointSchema]
 }, {
     timestamps: true
 });

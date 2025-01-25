@@ -6,24 +6,24 @@ const Task = require('../models/Task');
 // @desc    Create new meeting
 // @route   POST /api/meetings
 // @access  Private
-exports.createMeeting = asyncHandler(async (req, res) => {
-    const { title, date, venue, participants, summary, actionPoints } = req.body;
+exports.createMeeting = async (req, res) => {
+    try {
+        const meeting = await Meeting.create({
+            ...req.body,
+            createdBy: req.user._id
+        });
 
-    const meeting = await Meeting.create({
-        title,
-        date,
-        venue,
-        participants,
-        summary,
-        actionPoints,
-        createdBy: req.user.id
-    });
-
-    res.status(201).json({
-        success: true,
-        data: meeting
-    });
-});
+        res.status(201).json({
+            success: true,
+            data: meeting
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
 
 // @desc    Add pain point to meeting
 // @route   POST /api/meetings/:id/painpoints
@@ -137,39 +137,52 @@ exports.removeParticipant = asyncHandler(async (req, res) => {
 // @desc    Get all meetings
 // @route   GET /api/meetings
 // @access  Private
-exports.getMeetings = asyncHandler(async (req, res) => {
-    const meetings = await Meeting.find({ createdBy: req.user.id })
-        .sort('-date');
+exports.getMeetings = async (req, res) => {
+    try {
+        const meetings = await Meeting.find({ createdBy: req.user._id })
+            .populate('participants', 'email')
+            .sort('-createdAt');
 
-    res.status(200).json({
-        success: true,
-        count: meetings.length,
-        data: meetings
-    });
-});
+        res.json({
+            success: true,
+            data: meetings
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'Server Error'
+        });
+    }
+};
 
 // @desc    Get single meeting
 // @route   GET /api/meetings/:id
 // @access  Private
-exports.getMeeting = asyncHandler(async (req, res) => {
-    const meeting = await Meeting.findById(req.params.id);
+exports.getMeeting = async (req, res) => {
+    try {
+        const meeting = await Meeting.findOne({
+            _id: req.params.id,
+            createdBy: req.user._id
+        }).populate('participants', 'email');
 
-    if (!meeting) {
-        res.status(404);
-        throw new Error('Meeting not found');
+        if (!meeting) {
+            return res.status(404).json({
+                success: false,
+                error: 'Meeting not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: meeting
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'Server Error'
+        });
     }
-
-    // Check if user owns the meeting
-    if (meeting.createdBy.toString() !== req.user.id) {
-        res.status(401);
-        throw new Error('Not authorized to access this meeting');
-    }
-
-    res.status(200).json({
-        success: true,
-        data: meeting
-    });
-});
+};
 
 // @desc    Update meeting
 // @route   PUT /api/meetings/:id

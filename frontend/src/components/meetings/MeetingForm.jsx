@@ -15,13 +15,15 @@ export default function MeetingForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await meetings.create(formData);
-            console.log('Meeting created:', response.data);
+            const response = await meetings.create({
+                ...formData,
+                participants: [] // Initialize with empty participants array
+            });
             toast.success('Meeting created successfully!');
             navigate('/meetings');
         } catch (error) {
             console.error('Error creating meeting:', error);
-            toast.error('Failed to create meeting');
+            toast.error(error.message || 'Failed to create meeting');
         }
     };
 
