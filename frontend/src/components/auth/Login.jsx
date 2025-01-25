@@ -16,13 +16,12 @@ export default function Login() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await login(formData);
-            console.log('Login response:', response);
+            await login(formData);
             toast.success('Login successful!');
             navigate('/');
         } catch (error) {
             console.error('Login error:', error);
-            toast.error(error.response?.data?.error || 'Login failed');
+            toast.error(error.response?.data?.message || 'Login failed');
         } finally {
             setLoading(false);
         }

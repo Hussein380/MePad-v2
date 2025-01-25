@@ -16,22 +16,14 @@ export default function Navbar() {
                 <div className="flex justify-between h-16">
                     <div className="flex items-center space-x-8">
                         <Link to="/" className="text-xl font-bold text-primary-600">
-                            Meeting Manager
+                            Home
                         </Link>
-                        <div className="hidden md:flex space-x-4">
-                            <Link
-                                to="/"
-                                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md"
-                            >
-                                Dashboard
-                            </Link>
-                            <Link
-                                to="/meetings"
-                                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md"
-                            >
-                                Meetings
-                            </Link>
-                        </div>
+                        <Link to="/dashboard" className="text-primary-600 hover:text-primary-500">
+                            Dashboard
+                        </Link>
+                        <Link to="/meetings" className="text-primary-600 hover:text-primary-500">
+                            Meetings
+                        </Link>
                     </div>
                     <div className="flex items-center space-x-4">
                         <span className="text-gray-700">{user?.email}</span>

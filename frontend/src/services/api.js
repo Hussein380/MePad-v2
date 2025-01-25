@@ -20,7 +20,16 @@ api.interceptors.request.use(
 );
 
 export const auth = {
-    login: (credentials) => api.post('/auth/login', credentials),
+    login: async (credentials) => {
+        try {
+            const response = await api.post('/auth/login', credentials);
+            return response;
+        } catch (error) {
+            // Ensure we're not passing the error object directly to React
+            const errorMessage = error.response?.data?.message || 'Login failed';
+            throw new Error(errorMessage);
+        }
+    },
     register: (userData) => api.post('/auth/register', userData),
     getMe: () => api.get('/auth/me')
 };
