@@ -26,11 +26,17 @@ export function AuthProvider({ children }) {
     };
 
     const login = async (credentials) => {
-        const response = await auth.login(credentials);
-        const { token, ...userData } = response.data.data;
-        localStorage.setItem('token', token);
-        setUser(userData);
-        return userData;
+        try {
+            const response = await auth.login(credentials);
+            console.log('AuthContext login response:', response);
+            const { token, ...userData } = response.data.data;
+            localStorage.setItem('token', token);
+            setUser(userData);
+            return userData;
+        } catch (error) {
+            console.error('AuthContext login error:', error);
+            throw error;
+        }
     };
 
     const register = async (userData) => {
