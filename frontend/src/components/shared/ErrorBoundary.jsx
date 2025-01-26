@@ -23,9 +23,12 @@ class ErrorBoundary extends Component {
                     <h2 className="text-xl font-bold text-red-600">Something went wrong</h2>
                     <button
                         className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
-                        onClick={() => window.location.reload()}
+                        onClick={() => {
+                            this.setState({ hasError: false });
+                            window.location.reload();
+                        }}
                     >
-                        Reload Page
+                        Try Again
                     </button>
                 </div>
             );

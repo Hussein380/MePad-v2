@@ -28,16 +28,14 @@ export function AuthProvider({ children }) {
     const login = async (credentials) => {
         try {
             const response = await auth.login(credentials);
-            if (response.data && response.data.data) {
-                const { token, ...userData } = response.data.data;
-                localStorage.setItem('token', token);
-                setUser(userData);
-                return true;
-            }
-            throw new Error('Invalid response format');
+            console.log('AuthContext login response:', response);
+            const { token, ...userData } = response.data.data;
+            localStorage.setItem('token', token);
+            setUser(userData);
+            return userData;
         } catch (error) {
             console.error('AuthContext login error:', error);
-            throw new Error(error.response?.data?.message || 'Login failed');
+            throw error;
         }
     };
 

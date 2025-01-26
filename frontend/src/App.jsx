@@ -1,4 +1,4 @@
-import { RouterProvider, createBrowserRouter, Outlet } from 'react-router-dom';
+import { RouterProvider, createBrowserRouter, Outlet, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/auth/Login';
@@ -9,10 +9,19 @@ import MeetingList from './components/meetings/MeetingList';
 import MeetingForm from './components/meetings/MeetingForm';
 import MeetingDetail from './components/meetings/MeetingDetail';
 import PrivateRoute from './components/auth/PrivateRoute';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 
 const router = createBrowserRouter([
     {
-        element: <AuthProvider><Toaster /><Outlet /></AuthProvider>,
+        element: (
+            <AuthProvider>
+                <Toaster />
+                <ErrorBoundary>
+                    {/* Outlet will be rendered here */}
+                    <Outlet />
+                </ErrorBoundary>
+            </AuthProvider>
+        ),
         children: [
             {
                 path: "/login",
@@ -27,6 +36,10 @@ const router = createBrowserRouter([
                 children: [
                     {
                         path: "/",
+                        element: <Dashboard />
+                    },
+                    {
+                        path: "/dashboard",
                         element: <Dashboard />
                     },
                     {

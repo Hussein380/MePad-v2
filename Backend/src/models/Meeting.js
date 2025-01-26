@@ -1,17 +1,28 @@
 const mongoose = require('mongoose');
 
+const participantSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, 'Please add participant name']
+    },
+    email: {
+        type: String,
+        required: [true, 'Please add participant email']
+    }
+});
+
 const actionPointSchema = new mongoose.Schema({
     description: {
         type: String,
-        required: true
+        required: [true, 'Please add a description']
     },
     assignedTo: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        type: String,
+        required: [true, 'Please specify who this is assigned to']
     },
     dueDate: {
         type: Date,
-        required: true
+        required: [true, 'Please add a due date']
     },
     status: {
         type: String,
@@ -39,16 +50,12 @@ const meetingSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Please add a summary']
     },
-    participants: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
+    participants: [participantSchema],
+    actionPoints: [actionPointSchema],
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    actionPoints: [actionPointSchema]
+        ref: 'User'
+    }
 }, {
     timestamps: true
 });

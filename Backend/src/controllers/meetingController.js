@@ -8,19 +8,25 @@ const Task = require('../models/Task');
 // @access  Private
 exports.createMeeting = async (req, res) => {
     try {
-        const meeting = await Meeting.create({
+        // Add the current user as the creator
+        const meetingData = {
             ...req.body,
             createdBy: req.user._id
-        });
+        };
+
+        console.log('Creating meeting with data:', meetingData); // Debug log
+
+        const meeting = await Meeting.create(meetingData);
 
         res.status(201).json({
             success: true,
             data: meeting
         });
     } catch (error) {
+        console.error('Meeting creation error:', error);
         res.status(400).json({
             success: false,
-            error: error.message
+            error: error.message || 'Invalid meeting data'
         });
     }
 };
@@ -139,18 +145,20 @@ exports.removeParticipant = asyncHandler(async (req, res) => {
 // @access  Private
 exports.getMeetings = async (req, res) => {
     try {
+        // Only fetch meetings created by the current user
         const meetings = await Meeting.find({ createdBy: req.user._id })
-            .populate('participants', 'email')
-            .sort('-createdAt');
+            .sort('-date')
+            .populate('participants', 'name email');
 
-        res.json({
+        res.status(200).json({
             success: true,
+            count: meetings.length,
             data: meetings
         });
     } catch (error) {
-        res.status(500).json({
+        res.status(400).json({
             success: false,
-            error: 'Server Error'
+            error: error.message
         });
     }
 };
@@ -162,8 +170,8 @@ exports.getMeeting = async (req, res) => {
     try {
         const meeting = await Meeting.findOne({
             _id: req.params.id,
-            createdBy: req.user._id
-        }).populate('participants', 'email');
+            createdBy: req.user._id // Only allow access to own meetings
+        }).populate('participants', 'name email');
 
         if (!meeting) {
             return res.status(404).json({
@@ -172,14 +180,14 @@ exports.getMeeting = async (req, res) => {
             });
         }
 
-        res.json({
+        res.status(200).json({
             success: true,
             data: meeting
         });
     } catch (error) {
-        res.status(500).json({
+        res.status(400).json({
             success: false,
-            error: 'Server Error'
+            error: error.message
         });
     }
 };
@@ -280,4 +288,82 @@ exports.updateActionPoint = asyncHandler(async (req, res) => {
         success: true,
         data: actionPoint
     });
-}); 
+});
+
+// Add action point to meeting
+exports.addActionPoint = async (req, res) => {
+    try {
+        const meeting = await Meeting.findById(req.params.id);
+        
+        if (!meeting) {
+            return res.status(404).json({
+                success: false,
+                error: 'Meeting not found'
+            });
+        }
+
+        // Check if user owns the meeting
+        if (meeting.createdBy.toString() !== req.user._id.toString()) {
+            return res.status(401).json({
+                success: false,
+                error: 'Not authorized'
+            });
+        }
+
+        meeting.actionPoints.push(req.body);
+        await meeting.save();
+
+        res.status(201).json({
+            success: true,
+            data: meeting
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Update action point
+exports.updateActionPoint = async (req, res) => {
+    try {
+        const meeting = await Meeting.findById(req.params.id);
+        
+        if (!meeting) {
+            return res.status(404).json({
+                success: false,
+                error: 'Meeting not found'
+            });
+        }
+
+        // Check if user owns the meeting
+        if (meeting.createdBy.toString() !== req.user._id.toString()) {
+            return res.status(401).json({
+                success: false,
+                error: 'Not authorized'
+            });
+        }
+
+        const actionPoint = meeting.actionPoints.id(req.params.actionId);
+        if (!actionPoint) {
+            return res.status(404).json({
+                success: false,
+                error: 'Action point not found'
+            });
+        }
+
+        Object.assign(actionPoint, req.body);
+        await meeting.save();
+
+        res.json({
+            success: true,
+            data: meeting
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
+        });
+    }
+}; 
