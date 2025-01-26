@@ -1,7 +1,81 @@
-# Meeting Management System
+# MePad - Meeting Management System
 
-## Project Overview
-A comprehensive meeting management system with a Node.js/Express backend and a React frontend.
+## Overview
+MePad is a comprehensive meeting management system that helps teams organize, track, and manage their meetings efficiently. Users can create meetings, add action points, track progress, and manage participants all in one place.
+
+## Features
+- **User Authentication**
+  - Register/Login functionality
+  - Secure JWT-based authentication
+  - Role-based access control
+
+- **Meeting Management**
+  - Create and schedule meetings
+  - Add and manage participants
+  - Track action points and their status
+  - Add meeting summaries and venues
+
+- **Action Points**
+  - Assign tasks to participants
+  - Set due dates
+  - Track status (pending, in-progress, completed)
+  - Email notifications (coming soon)
+
+## Tech Stack
+- **Frontend**: React, Vite, TailwindCSS
+- **Backend**: Node.js, Express
+- **Database**: MongoDB
+- **Deployment**: Vercel
+
+## Live Demo
+- Frontend: https://me-pad-fronted.vercel.app
+- Backend API: https://me-pad-backend.vercel.app/api
+
+## Local Development Setup
+
+### Backend Setup
+1. Clone the repository
+2. Navigate to backend directory:
+   ```bash
+   cd Backend
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Create `.env` file:
+   ```
+   PORT=5002
+   NODE_ENV=development
+   MONGO_URI=your_mongodb_uri
+   JWT_SECRET=your_jwt_secret
+   JWT_EXPIRE=30d
+   ```
+5. Start the server:
+   ```bash
+   npm run dev
+   ```
+
+### Frontend Setup
+1. Navigate to frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create `.env` file:
+   ```
+   VITE_API_URL=http://localhost:5002/api
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+## API Documentation
+See [API_DOCS.md](Backend/apidocs.md) for detailed API documentation.
 
 ## Project Structure
 - `/Backend` - Node.js/Express backend
