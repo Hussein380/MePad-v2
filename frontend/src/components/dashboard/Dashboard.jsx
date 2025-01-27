@@ -37,12 +37,17 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="px-4 sm:px-6 md:px-8 max-w-7xl mx-auto w-full overflow-hidden">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Welcome to Meeting Manager</h1>
+                {/* Header - Updated for better responsiveness */}
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 py-4">
+                    <div className="w-full sm:w-auto text-center sm:text-left">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+                            Welcome to Meeting Manager
+                        </h1>
+                    </div>
                     <Link
                         to="/meetings/new"
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors w-full sm:w-auto text-center"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 
+                                 transition-colors w-full sm:w-auto text-center whitespace-nowrap"
                     >
                         New Meeting
                     </Link>
