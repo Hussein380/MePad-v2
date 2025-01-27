@@ -137,7 +137,7 @@ export default function Dashboard() {
                             {pendingActions.length === 0 ? (
                                 <p className="text-blue-200 text-center py-4">No pending actions</p>
                             ) : (
-                                pendingActions.map((action) => (
+                                pendingActions.map((action, index) => (
                                     <motion.div
                                         key={action._id}
                                         whileHover={{ scale: 1.02 }}
@@ -147,14 +147,23 @@ export default function Dashboard() {
                                             className="block p-4 rounded-lg bg-blue-800/30 hover:bg-blue-800/40 
                                                      border border-blue-700/50 transition-all"
                                         >
-                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                                            <div className="flex flex-col gap-2">
                                                 <div>
-                                                    <h3 className="font-medium text-white">{action.description}</h3>
-                                                    <p className="text-sm text-blue-200">Assigned to: {action.assignedTo}</p>
+                                                    <h3 className="font-medium text-white">
+                                                        {index + 1}. {action.description}
+                                                    </h3>
+                                                    <p className="text-sm text-blue-200">
+                                                        Assigned to: {action.assignedTo}
+                                                    </p>
                                                 </div>
-                                                <span className="text-xs text-blue-300 whitespace-nowrap">
-                                                    Due: {new Date(action.dueDate).toLocaleDateString()}
-                                                </span>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-yellow-300">
+                                                        Status: {action.status}
+                                                    </span>
+                                                    <span className="text-blue-300">
+                                                        Due: {new Date(action.dueDate).toLocaleDateString()}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </Link>
                                     </motion.div>

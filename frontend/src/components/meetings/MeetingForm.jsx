@@ -9,6 +9,7 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
         date: initialData.date || '',
         venue: initialData.venue || '',
         summary: initialData.summary || '',
+        status: initialData.status || 'upcoming',
         actionPoints: initialData.actionPoints || [],
         painPoints: initialData.painPoints || [],
         participants: initialData.participants || []
@@ -30,6 +31,7 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
     });
     const [showActionPointForm, setShowActionPointForm] = useState(false);
     const [showPainPointForm, setShowPainPointForm] = useState(false);
+    const [showParticipantForm, setShowParticipantForm] = useState(false);
     const navigate = useNavigate();
 
     const handleAddActionPoint = () => {
@@ -41,14 +43,12 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
             ...formData,
             actionPoints: [...formData.actionPoints, { ...currentActionPoint, id: Date.now() }]
         });
-        if (!showActionPointForm) {
-            setCurrentActionPoint({
-                description: '',
-                assignedTo: '',
-                dueDate: '',
-                status: 'pending'
-            });
-        }
+        setCurrentActionPoint({
+            description: '',
+            assignedTo: '',
+            dueDate: '',
+            status: 'pending'
+        });
         toast.success('Action point added');
     };
 
@@ -61,13 +61,12 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
             ...formData,
             painPoints: [...formData.painPoints, { ...currentPainPoint, id: Date.now() }]
         });
-        if (!showPainPointForm) {
-            setCurrentPainPoint({
-                description: '',
-                severity: 'low',
-                status: 'open'
-            });
-        }
+        setCurrentPainPoint({
+            description: '',
+            severity: 'low',
+            status: 'open'
+        });
+        setShowPainPointForm(false);
         toast.success('Pain point added');
     };
 
@@ -92,9 +91,10 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
         }
         setFormData({
             ...formData,
-            participants: [...(formData.participants || []), currentParticipant]
+            participants: [...formData.participants, { ...currentParticipant, id: Date.now() }]
         });
         setCurrentParticipant({ name: '', email: '' });
+        toast.success('Participant added');
     };
 
     const handleRemoveParticipant = (index) => {
@@ -128,17 +128,22 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
         if (!validateForm()) return;
         
         try {
-            // Format the data before sending
             const meetingData = {
                 title: formData.title,
                 date: new Date(formData.date).toISOString(),
                 venue: formData.venue,
                 summary: formData.summary,
+                status: formData.status,
                 actionPoints: formData.actionPoints.map(point => ({
                     description: point.description,
                     assignedTo: point.assignedTo,
                     dueDate: new Date(point.dueDate).toISOString(),
                     status: 'pending'
+                })),
+                painPoints: formData.painPoints.map(point => ({
+                    description: point.description,
+                    severity: point.severity,
+                    status: 'open'
                 })),
                 participants: formData.participants.map(participant => ({
                     name: participant.name,
@@ -146,15 +151,12 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                 }))
             };
 
-            console.log('Sending meeting data:', meetingData); // Debug log
-            const response = await meetings.create(meetingData);
-            console.log('Server response:', response); // Debug log
-            
+            await meetings.create(meetingData);
             toast.success('Meeting created successfully!');
             navigate('/meetings');
         } catch (error) {
-            console.error('Error creating meeting:', error.response?.data || error);
-            toast.error(error.response?.data?.error || 'Failed to create meeting. Please check all required fields.');
+            console.error('Error creating meeting:', error);
+            toast.error('Failed to create meeting');
         }
     };
 
@@ -198,31 +200,43 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                             />
                         </div>
                         <div className="w-full">
-                            <label className="block text-sm font-medium mb-1">Summary</label>
-                            <textarea
-                                value={formData.summary}
-                                onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                                className="w-full px-3 py-2 border rounded-md text-sm resize-y"
+                            <label className="block text-sm font-medium mb-1">Status</label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className="w-full px-3 py-2 border rounded-md text-sm"
                                 required
-                            ></textarea>
+                            >
+                                <option value="upcoming">Upcoming</option>
+                                <option value="completed">Completed</option>
+                            </select>
                         </div>
+                    </div>
+
+                    <div className="w-full">
+                        <label className="block text-sm font-medium mb-1">Summary</label>
+                        <textarea
+                            value={formData.summary}
+                            onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-md text-sm resize-y"
+                            required
+                        ></textarea>
                     </div>
                 </div>
 
-                {/* Action Points - Only adding responsive classes */}
+                {/* Action Points Section */}
                 <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex justify-between items-center mb-4">
                         <h3 className="text-base font-medium">Action Points</h3>
                         <button
                             type="button"
                             onClick={() => setShowActionPointForm(true)}
-                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap"
+                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                         >
                             Add Action Point
                         </button>
                     </div>
 
-                    {/* Keep original action points form and list, just add w-full and responsive classes */}
                     {showActionPointForm && (
                         <div className="w-full flex flex-col gap-2 p-3 bg-gray-50 rounded-md">
                             <input
@@ -231,75 +245,45 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                                 value={currentActionPoint.description}
                                 onChange={(e) => setCurrentActionPoint({ ...currentActionPoint, description: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-md text-sm"
-                                required
                             />
-                            <div className="flex flex-col sm:flex-row gap-2 w-full">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <input
                                     type="text"
                                     placeholder="Assigned To"
                                     value={currentActionPoint.assignedTo}
                                     onChange={(e) => setCurrentActionPoint({ ...currentActionPoint, assignedTo: e.target.value })}
-                                    className="w-full sm:flex-1 px-3 py-2 border rounded-md text-sm"
-                                    required
+                                    className="w-full px-3 py-2 border rounded-md text-sm"
                                 />
                                 <input
                                     type="date"
                                     value={currentActionPoint.dueDate}
                                     onChange={(e) => setCurrentActionPoint({ ...currentActionPoint, dueDate: e.target.value })}
-                                    className="w-full sm:flex-1 px-3 py-2 border rounded-md text-sm"
-                                    required
+                                    className="w-full px-3 py-2 border rounded-md text-sm"
                                 />
                             </div>
+                            <button
+                                type="button"
+                                onClick={handleAddActionPoint}
+                                className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                            >
+                                Add
+                            </button>
                         </div>
                     )}
 
-                    <div className="space-y-3">
+                    {/* Display added action points */}
+                    <div className="space-y-2">
                         {formData.actionPoints.map((point, index) => (
-                            <div key={point.id} className="w-full flex flex-col gap-2 p-3 bg-gray-50 rounded-md">
-                                <input
-                                    type="text"
-                                    placeholder="Description"
-                                    value={point.description}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        actionPoints: formData.actionPoints.map((p, i) =>
-                                            i === index ? { ...p, description: e.target.value } : p
-                                        )
-                                    })}
-                                    className="w-full px-3 py-2 border rounded-md text-sm"
-                                    required
-                                />
-                                <div className="flex flex-col sm:flex-row gap-2 w-full">
-                                    <input
-                                        type="text"
-                                        placeholder="Assigned To"
-                                        value={point.assignedTo}
-                                        onChange={(e) => setFormData({
-                                            ...formData,
-                                            actionPoints: formData.actionPoints.map((p, i) =>
-                                                i === index ? { ...p, assignedTo: e.target.value } : p
-                                            )
-                                        })}
-                                        className="w-full sm:flex-1 px-3 py-2 border rounded-md text-sm"
-                                        required
-                                    />
-                                    <input
-                                        type="date"
-                                        value={point.dueDate}
-                                        onChange={(e) => setFormData({
-                                            ...formData,
-                                            actionPoints: formData.actionPoints.map((p, i) =>
-                                                i === index ? { ...p, dueDate: e.target.value } : p
-                                            )
-                                        })}
-                                        className="w-full sm:flex-1 px-3 py-2 border rounded-md text-sm"
-                                        required
-                                    />
+                            <div key={point.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-md">
+                                <div>
+                                    <p className="font-medium">{point.description}</p>
+                                    <p className="text-sm text-gray-600">Assigned to: {point.assignedTo}</p>
+                                    <p className="text-sm text-gray-600">Due: {new Date(point.dueDate).toLocaleDateString()}</p>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveActionPoint(index)}
-                                    className="w-full sm:w-auto text-red-600 px-3 py-2 text-sm rounded-md hover:bg-red-50"
+                                    className="text-red-600 hover:text-red-700"
                                 >
                                     Remove
                                 </button>
@@ -308,14 +292,14 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                     </div>
                 </div>
 
-                {/* Pain Points - Only adding responsive classes */}
+                {/* Pain Points Section */}
                 <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex justify-between items-center mb-4">
                         <h3 className="text-base font-medium">Pain Points</h3>
                         <button
                             type="button"
                             onClick={() => setShowPainPointForm(true)}
-                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap"
+                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                         >
                             Add Pain Point
                         </button>
@@ -329,56 +313,44 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                                 value={currentPainPoint.description}
                                 onChange={(e) => setCurrentPainPoint({ ...currentPainPoint, description: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-md text-sm"
-                                required
                             />
                             <select
                                 value={currentPainPoint.severity}
                                 onChange={(e) => setCurrentPainPoint({ ...currentPainPoint, severity: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-md text-sm"
-                                required
                             >
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
                             </select>
+                            <button
+                                type="button"
+                                onClick={handleAddPainPoint}
+                                className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                            >
+                                Add
+                            </button>
                         </div>
                     )}
 
-                    <div className="space-y-3">
+                    {/* Display added pain points */}
+                    <div className="space-y-2">
                         {formData.painPoints.map((point, index) => (
-                            <div key={point.id} className="w-full flex flex-col gap-2 p-3 bg-gray-50 rounded-md">
-                                <input
-                                    type="text"
-                                    placeholder="Description"
-                                    value={point.description}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        painPoints: formData.painPoints.map((p, i) =>
-                                            i === index ? { ...p, description: e.target.value } : p
-                                        )
-                                    })}
-                                    className="w-full px-3 py-2 border rounded-md text-sm"
-                                    required
-                                />
-                                <select
-                                    value={point.severity}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        painPoints: formData.painPoints.map((p, i) =>
-                                            i === index ? { ...p, severity: e.target.value } : p
-                                        )
-                                    })}
-                                    className="w-full px-3 py-2 border rounded-md text-sm"
-                                    required
-                                >
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                </select>
+                            <div key={point.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-md">
+                                <div>
+                                    <p className="font-medium">{point.description}</p>
+                                    <p className="text-sm text-gray-600">
+                                        Severity: <span className={`${
+                                            point.severity === 'high' ? 'text-red-600' :
+                                            point.severity === 'medium' ? 'text-yellow-600' :
+                                            'text-green-600'
+                                        }`}>{point.severity}</span>
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => handleRemovePainPoint(index)}
-                                    className="w-full sm:w-auto text-red-600 px-3 py-2 text-sm rounded-md hover:bg-red-50"
+                                    className="text-red-600 hover:text-red-700"
                                 >
                                     Remove
                                 </button>
@@ -389,18 +361,18 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
 
                 {/* Participants - Only adding responsive classes */}
                 <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex justify-between items-center">
                         <h3 className="text-base font-medium">Participants</h3>
                         <button
                             type="button"
-                            onClick={() => setShowActionPointForm(true)}
-                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 whitespace-nowrap"
+                            onClick={() => setShowParticipantForm(true)}
+                            className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                         >
                             Add Participant
                         </button>
                     </div>
 
-                    {showActionPointForm && (
+                    {showParticipantForm && (
                         <div className="w-full flex flex-col gap-2 p-3 bg-gray-50 rounded-md">
                             <input
                                 type="text"
@@ -408,7 +380,6 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                                 value={currentParticipant.name}
                                 onChange={(e) => setCurrentParticipant({ ...currentParticipant, name: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-md text-sm"
-                                required
                             />
                             <input
                                 type="email"
@@ -416,44 +387,28 @@ export default function MeetingForm({ onSubmit, initialData = {} }) {
                                 value={currentParticipant.email}
                                 onChange={(e) => setCurrentParticipant({ ...currentParticipant, email: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-md text-sm"
-                                required
                             />
+                            <button
+                                type="button"
+                                onClick={handleAddParticipant}
+                                className="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                            >
+                                Add
+                            </button>
                         </div>
                     )}
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         {formData.participants.map((participant, index) => (
-                            <div key={participant.name} className="w-full flex flex-col gap-2 p-3 bg-gray-50 rounded-md">
-                                <input
-                                    type="text"
-                                    placeholder="Name"
-                                    value={participant.name}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        participants: formData.participants.map((p, i) =>
-                                            i === index ? { ...p, name: e.target.value } : p
-                                        )
-                                    })}
-                                    className="w-full px-3 py-2 border rounded-md text-sm"
-                                    required
-                                />
-                                <input
-                                    type="email"
-                                    placeholder="Email"
-                                    value={participant.email}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        participants: formData.participants.map((p, i) =>
-                                            i === index ? { ...p, email: e.target.value } : p
-                                        )
-                                    })}
-                                    className="w-full px-3 py-2 border rounded-md text-sm"
-                                    required
-                                />
+                            <div key={participant.id || index} className="flex justify-between items-center p-2 bg-gray-50 rounded-md">
+                                <div>
+                                    <p className="font-medium">{participant.name}</p>
+                                    <p className="text-sm text-gray-600">{participant.email}</p>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveParticipant(index)}
-                                    className="w-full sm:w-auto text-red-600 px-3 py-2 text-sm rounded-md hover:bg-red-50"
+                                    className="text-red-600 hover:text-red-700"
                                 >
                                     Remove
                                 </button>
