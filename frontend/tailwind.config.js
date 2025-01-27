@@ -20,6 +20,9 @@ export default {
           900: '#0c4a6e',
         },
       },
+      screens: {
+        'xs': '475px',
+      },
     },
   },
   plugins: [],
