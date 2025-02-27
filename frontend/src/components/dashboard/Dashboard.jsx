@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { dashboard } from '../../services/api';
 import { BiCalendar } from 'react-icons/bi';
 import { AiOutlineClockCircle, AiOutlineCheckCircle, AiOutlineUnorderedList } from 'react-icons/ai';
+import { FaUserFriends } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import StatCard from '../shared/StatCard';
@@ -12,6 +13,7 @@ export default function Dashboard() {
     const [stats, setStats] = useState(null);
     const [recentMeetings, setRecentMeetings] = useState([]);
     const [pendingActions, setPendingActions] = useState([]);
+    const [invitedMeetings, setInvitedMeetings] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -21,6 +23,7 @@ export default function Dashboard() {
                 setStats(response.data.data.stats);
                 setRecentMeetings(response.data.data.recentMeetings);
                 setPendingActions(response.data.data.pendingActions);
+                setInvitedMeetings(response.data.data.invitedMeetings || []);
             } catch (error) {
                 toast.error('Failed to fetch dashboard data');
                 console.error('Dashboard error:', error);
@@ -89,7 +92,7 @@ export default function Dashboard() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
                 >
                     {/* Recent Meetings */}
                     <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl">
@@ -172,7 +175,48 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Meetings You're Invited To */}
+                {invitedMeetings && invitedMeetings.length > 0 && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="mb-6"
+                    >
+                        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl">
+                            <h2 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+                                <FaUserFriends className="text-green-400" />
+                                Meetings You're Invited To
+                            </h2>
+                            <div className="space-y-3">
+                                {invitedMeetings.map((meeting) => (
+                                    <motion.div
+                                        key={meeting._id}
+                                        whileHover={{ scale: 1.02 }}
+                                    >
+                                        <Link
+                                            to={`/meetings/${meeting._id}`}
+                                            className="block p-4 rounded-lg bg-blue-800/30 hover:bg-blue-800/40 
+                                                     border border-blue-700/50 transition-all"
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                                                <div>
+                                                    <h3 className="font-medium text-white">{meeting.title}</h3>
+                                                    <p className="text-sm text-blue-200">{meeting.venue}</p>
+                                                </div>
+                                                <span className="text-xs text-blue-300">
+                                                    {new Date(meeting.date).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
             </div>
         </div>
     );
-} 
+}

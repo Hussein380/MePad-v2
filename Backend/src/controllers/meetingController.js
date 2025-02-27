@@ -145,10 +145,24 @@ exports.removeParticipant = asyncHandler(async (req, res) => {
 // @access  Private
 exports.getMeetings = async (req, res) => {
     try {
-        // Only fetch meetings created by the current user
-        const meetings = await Meeting.find({ createdBy: req.user._id })
+        // Get user info
+        const user = await User.findById(req.user._id);
+        
+        // Find meetings created by the user
+        const createdMeetings = await Meeting.find({ createdBy: req.user._id })
             .sort('-date')
             .populate('participants', 'name email');
+            
+        // Find meetings where the user is a participant
+        const participatingMeetings = await Meeting.find({
+            'participants.email': user.email,
+            createdBy: { $ne: req.user._id } // Exclude meetings created by the user to avoid duplicates
+        })
+        .sort('-date')
+        .populate('participants', 'name email');
+        
+        // Combine the results
+        const meetings = [...createdMeetings, ...participatingMeetings];
 
         res.status(200).json({
             success: true,
@@ -168,15 +182,24 @@ exports.getMeetings = async (req, res) => {
 // @access  Private
 exports.getMeeting = async (req, res) => {
     try {
-        const meeting = await Meeting.findOne({
-            _id: req.params.id,
-            createdBy: req.user._id // Only allow access to own meetings
-        }).populate('participants', 'name email');
+        const meeting = await Meeting.findById(req.params.id);
 
         if (!meeting) {
             return res.status(404).json({
                 success: false,
                 error: 'Meeting not found'
+            });
+        }
+
+        // Check if user is the creator or a participant
+        const isCreator = meeting.createdBy.toString() === req.user._id.toString();
+        const user = await User.findById(req.user._id);
+        const isParticipant = meeting.participants.some(p => p.email === user.email);
+
+        if (!isCreator && !isParticipant) {
+            return res.status(403).json({
+                success: false,
+                error: 'Not authorized to view this meeting'
             });
         }
 
@@ -203,16 +226,39 @@ exports.updateMeeting = asyncHandler(async (req, res) => {
         throw new Error('Meeting not found');
     }
 
-    // Check if user owns the meeting
-    if (meeting.createdBy.toString() !== req.user.id) {
+    // Check if user is the creator or a participant
+    const isCreator = meeting.createdBy.toString() === req.user.id;
+    const user = await User.findById(req.user.id);
+    const isParticipant = meeting.participants.some(p => p.email === user.email);
+
+    if (!isCreator && !isParticipant) {
         res.status(401);
         throw new Error('Not authorized to update this meeting');
     }
 
-    meeting = await Meeting.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true
-    });
+    // If user is a participant but not the creator, they can only update certain fields
+    if (isParticipant && !isCreator) {
+        // Create a filtered body with only the fields participants can update
+        const allowedFields = ['actionPoints'];
+        const filteredBody = {};
+        
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                filteredBody[field] = req.body[field];
+            }
+        }
+        
+        meeting = await Meeting.findByIdAndUpdate(req.params.id, filteredBody, {
+            new: true,
+            runValidators: true
+        });
+    } else {
+        // Creator can update all fields
+        meeting = await Meeting.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+    }
 
     res.status(200).json({
         success: true,
@@ -281,6 +327,17 @@ exports.updateActionPoint = asyncHandler(async (req, res) => {
         throw new Error('Action point not found');
     }
 
+    // Check if user is the creator or a participant
+    const isCreator = meeting.createdBy.toString() === req.user.id;
+    const user = await User.findById(req.user.id);
+    const isParticipant = meeting.participants.some(p => p.email === user.email);
+
+    if (!isCreator && !isParticipant) {
+        res.status(401);
+        throw new Error('Not authorized to update this action point');
+    }
+
+    // Update the action point
     actionPoint.status = req.body.status;
     await meeting.save();
 
@@ -302,12 +359,23 @@ exports.addActionPoint = async (req, res) => {
             });
         }
 
-        // Check if user owns the meeting
-        if (meeting.createdBy.toString() !== req.user._id.toString()) {
+        // Check if user is the creator or a participant
+        const isCreator = meeting.createdBy.toString() === req.user._id.toString();
+        const user = await User.findById(req.user._id);
+        const isParticipant = meeting.participants.some(p => p.email === user.email);
+
+        if (!isCreator && !isParticipant) {
             return res.status(401).json({
                 success: false,
-                error: 'Not authorized'
+                error: 'Not authorized to add action points to this meeting'
             });
+        }
+
+        // If participant is adding an action point, mark it as assigned to them by default
+        if (isParticipant && !isCreator) {
+            if (!req.body.assignedTo) {
+                req.body.assignedTo = user.email;
+            }
         }
 
         meeting.actionPoints.push(req.body);

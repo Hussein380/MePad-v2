@@ -9,7 +9,11 @@ const {
     updateActionPoint
 } = require('../controllers/meetingController');
 
-const { protect } = require('../middleware/auth');
+const { protect } = require('../middleware/authMiddleware');
+
+// Include invitation routes
+const invitationRouter = require('./invitationRoutes');
+router.use('/:id/invitations', invitationRouter);
 
 router.route('/')
     .get(protect, getMeetings)
@@ -23,4 +27,4 @@ router.route('/:id')
 router.route('/:id/action-points/:actionId')
     .put(protect, updateActionPoint);
 
-module.exports = router; 
+module.exports = router;

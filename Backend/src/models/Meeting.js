@@ -8,6 +8,16 @@ const participantSchema = new mongoose.Schema({
     email: {
         type: String,
         required: [true, 'Please add participant email']
+    },
+    status: {
+        type: String,
+        enum: ['invited', 'accepted', 'declined'],
+        default: 'invited'
+    },
+    role: {
+        type: String,
+        enum: ['viewer', 'contributor', 'organizer'],
+        default: 'viewer'
     }
 });
 

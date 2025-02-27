@@ -8,6 +8,7 @@ import Layout from './components/layout/Layout';
 import MeetingList from './components/meetings/MeetingList';
 import MeetingForm from './components/meetings/MeetingForm';
 import MeetingDetail from './components/meetings/MeetingDetail';
+import InvitationPage from './pages/InvitationPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
             {
                 path: "/register",
                 element: <Register />
+            },
+            {
+                path: "/invitation/:token",
+                element: <InvitationPage />
             },
             {
                 element: <PrivateRoute><Layout /></PrivateRoute>,

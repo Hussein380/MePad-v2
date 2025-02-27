@@ -7,31 +7,43 @@ const asyncHandler = require('../utils/asyncHandler');
 // @route   GET /api/dashboard
 // @access  Private
 exports.getDashboard = asyncHandler(async (req, res) => {
-    // Get all meetings for the user
-    const meetings = await Meeting.find({ createdBy: req.user.id })
+    // Get all meetings created by the user
+    const createdMeetings = await Meeting.find({ createdBy: req.user.id })
         .sort('-date')
         .select('title date venue summary actionPoints');
 
+    // Get all meetings where the user is a participant (by email)
+    const user = await User.findById(req.user.id);
+    const participatingMeetings = await Meeting.find({
+        'participants.email': user.email,
+        createdBy: { $ne: req.user.id } // Exclude meetings created by the user to avoid duplicates
+    })
+    .sort('-date')
+    .select('title date venue summary actionPoints participants createdBy');
+
+    // Combine meetings for statistics
+    const allMeetings = [...createdMeetings, ...participatingMeetings];
+
     // Calculate statistics
     const stats = {
-        totalMeetings: meetings.length,
-        upcomingMeetings: meetings.filter(m => new Date(m.date) > new Date()).length,
-        pendingActions: meetings.reduce((acc, meeting) => 
+        totalMeetings: allMeetings.length,
+        upcomingMeetings: allMeetings.filter(m => new Date(m.date) > new Date()).length,
+        pendingActions: allMeetings.reduce((acc, meeting) => 
             acc + meeting.actionPoints.filter(ap => ap.status === 'pending').length, 0),
-        completedActions: meetings.reduce((acc, meeting) => 
+        completedActions: allMeetings.reduce((acc, meeting) => 
             acc + meeting.actionPoints.filter(ap => ap.status === 'completed').length, 0)
     };
 
-    // Get recent meetings
-    const recentMeetings = meetings.slice(0, 5);
+    // Get recent meetings (created by the user)
+    const recentMeetings = createdMeetings.slice(0, 5);
 
-    // Get upcoming meetings
-    const upcomingMeetings = meetings
+    // Get upcoming meetings (created by the user)
+    const upcomingMeetings = createdMeetings
         .filter(m => new Date(m.date) > new Date())
         .slice(0, 5);
 
     // Get pending action points across all meetings
-    const pendingActions = meetings
+    const pendingActions = allMeetings
         .flatMap(meeting => meeting.actionPoints
             .filter(ap => ap.status === 'pending')
             .map(ap => ({
@@ -41,13 +53,17 @@ exports.getDashboard = asyncHandler(async (req, res) => {
             })))
         .slice(0, 5);
 
+    // Get meetings where user is invited as a participant
+    const invitedMeetings = participatingMeetings.slice(0, 5);
+
     res.status(200).json({
         success: true,
         data: {
             stats,
             recentMeetings,
             upcomingMeetings,
-            pendingActions
+            pendingActions,
+            invitedMeetings
         }
     });
 });

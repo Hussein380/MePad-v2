@@ -4,6 +4,7 @@ const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const meetingRoutes = require('./routes/meetingRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const publicInvitationRoutes = require('./routes/publicInvitationRoutes');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/invite', publicInvitationRoutes);
 
 // Error handler
 app.use(errorHandler);

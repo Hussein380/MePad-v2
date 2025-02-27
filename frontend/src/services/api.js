@@ -24,10 +24,21 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // Handle 401 Unauthorized errors by redirecting to login
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             window.location.href = '/login';
         }
+        
+        // Create a more descriptive error message
+        const errorMessage = error.response?.data?.error || 
+                            error.response?.data?.message || 
+                            error.message || 
+                            'An unexpected error occurred';
+        
+        // Attach the error message to the error object for easier access
+        error.displayMessage = errorMessage;
+        
         return Promise.reject(error);
     }
 );
@@ -49,7 +60,17 @@ export const meetings = {
     addActionPoint: (meetingId, actionPoint) => 
         api.post(`/meetings/${meetingId}/action-points`, actionPoint),
     deleteActionPoint: (meetingId, actionId) => 
-        api.delete(`/meetings/${meetingId}/action-points/${actionId}`)
+        api.delete(`/meetings/${meetingId}/action-points/${actionId}`),
+    sendInvitations: (meetingId, participants) => 
+        api.post(`/meetings/${meetingId}/invitations`, { participants })
+};
+
+export const invitations = {
+    verify: (token) => api.get(`/api/invite/${token}`),
+    accept: (token) => api.put(`/api/invite/${token}/status`, { status: 'accepted' }),
+    decline: (token) => api.put(`/api/invite/${token}/status`, { status: 'declined' }),
+    getInvitation: (token) => api.get(`/api/invite/${token}`),
+    updateInvitationStatus: (token, data) => api.put(`/api/invite/${token}/status`, data)
 };
 
 export const dashboard = {

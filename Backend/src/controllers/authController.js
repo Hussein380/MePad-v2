@@ -3,6 +3,7 @@ const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const Meeting = require('../models/Meeting');
 const Task = require('../models/Task');
+const Invitation = require('../models/Invitation');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -36,6 +37,19 @@ exports.register = asyncHandler(async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
     );
+
+    // Check if there are any invitations for this email
+    // This will allow new users to see meetings they've been invited to
+    const invitations = await Invitation.find({ email });
+    if (invitations.length > 0) {
+        console.log(`Found ${invitations.length} existing invitations for new user ${email}`);
+        
+        // Update invitation status to 'accepted' for this user
+        await Invitation.updateMany(
+            { email },
+            { status: 'accepted' }
+        );
+    }
 
     res.status(201).json({
         success: true,

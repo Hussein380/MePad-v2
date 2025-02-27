@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { meetings } from '../../services/api';
 import { formatDate } from '../../utils/helpers';
 import { motion } from 'framer-motion';
-import { BiEdit, BiTrash, BiArrowBack, BiSave, BiX } from 'react-icons/bi';
+import { BiEdit, BiTrash, BiArrowBack, BiSave, BiX, BiPlus } from 'react-icons/bi';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
@@ -27,7 +27,7 @@ export default function MeetingDetail() {
             setMeeting(response.data.data);
             setEditedMeeting(response.data.data);
         } catch (error) {
-            toast.error('Failed to fetch meeting details');
+            toast.error(error.displayMessage || 'Failed to fetch meeting details');
             navigate('/meetings');
         } finally {
             setLoading(false);
@@ -40,7 +40,7 @@ export default function MeetingDetail() {
             toast.success('Meeting deleted successfully');
             navigate('/meetings');
         } catch (error) {
-            toast.error('Failed to delete meeting');
+            toast.error(error.displayMessage || 'Failed to delete meeting');
         }
         setShowDeleteConfirm(false);
     };
@@ -57,7 +57,7 @@ export default function MeetingDetail() {
             toast.success('Meeting updated successfully');
             fetchMeetingDetails();
         } catch (error) {
-            toast.error('Failed to update meeting');
+            toast.error(error.displayMessage || 'Failed to update meeting');
         }
     };
 
@@ -84,13 +84,24 @@ export default function MeetingDetail() {
         }
     };
 
-    const handleAddActionPoint = async (actionPoint) => {
+    const handleAddActionPoint = async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const actionPoint = {
+            description: formData.get('description'),
+            assignedTo: formData.get('assignedTo'),
+            dueDate: formData.get('dueDate'),
+            status: 'pending'
+        };
+        
         try {
             await meetings.addActionPoint(id, actionPoint);
             toast.success('Action point added successfully');
+            setShowAddActionPoint(false);
             fetchMeetingDetails();
         } catch (error) {
-            toast.error('Failed to add action point');
+            toast.error(error.displayMessage || 'Failed to add action point');
         }
     };
 
@@ -224,6 +235,113 @@ export default function MeetingDetail() {
                     )}
                 </motion.div>
 
+                {/* Participants Section */}
+                <motion.div 
+                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl 
+                             border border-white/10 mb-6"
+                >
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold text-white">Participants</h2>
+                        {isEditing && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEditedMeeting({
+                                        ...editedMeeting,
+                                        participants: [
+                                            ...editedMeeting.participants,
+                                            { name: '', email: '', role: 'viewer' }
+                                        ]
+                                    });
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md flex items-center gap-1"
+                            >
+                                <BiPlus /> Add Participant
+                            </button>
+                        )}
+                    </div>
+                    
+                    {isEditing ? (
+                        <div className="space-y-3">
+                            {editedMeeting.participants.map((participant, index) => (
+                                <div key={index} className="flex flex-col sm:flex-row gap-2 p-2 bg-blue-800/30 rounded-lg">
+                                    <input
+                                        type="text"
+                                        value={participant.name}
+                                        onChange={(e) => {
+                                            const updatedParticipants = [...editedMeeting.participants];
+                                            updatedParticipants[index].name = e.target.value;
+                                            setEditedMeeting({
+                                                ...editedMeeting,
+                                                participants: updatedParticipants
+                                            });
+                                        }}
+                                        placeholder="Name"
+                                        className="flex-1 px-3 py-1 bg-blue-800/50 border border-blue-700 rounded-md text-white"
+                                    />
+                                    <input
+                                        type="email"
+                                        value={participant.email}
+                                        onChange={(e) => {
+                                            const updatedParticipants = [...editedMeeting.participants];
+                                            updatedParticipants[index].email = e.target.value;
+                                            setEditedMeeting({
+                                                ...editedMeeting,
+                                                participants: updatedParticipants
+                                            });
+                                        }}
+                                        placeholder="Email"
+                                        className="flex-1 px-3 py-1 bg-blue-800/50 border border-blue-700 rounded-md text-white"
+                                    />
+                                    <select
+                                        value={participant.role}
+                                        onChange={(e) => {
+                                            const updatedParticipants = [...editedMeeting.participants];
+                                            updatedParticipants[index].role = e.target.value;
+                                            setEditedMeeting({
+                                                ...editedMeeting,
+                                                participants: updatedParticipants
+                                            });
+                                        }}
+                                        className="px-3 py-1 bg-blue-800/50 border border-blue-700 rounded-md text-white"
+                                    >
+                                        <option value="viewer">Viewer</option>
+                                        <option value="contributor">Contributor</option>
+                                    </select>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const updatedParticipants = [...editedMeeting.participants];
+                                            updatedParticipants.splice(index, 1);
+                                            setEditedMeeting({
+                                                ...editedMeeting,
+                                                participants: updatedParticipants
+                                            });
+                                        }}
+                                        className="text-red-400 hover:text-red-300 px-2 py-1"
+                                    >
+                                        <BiX size={20} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {meeting.participants.map((participant, index) => (
+                                <div key={index} className="flex items-center gap-2 p-2 bg-blue-800/30 rounded-lg">
+                                    <div className="flex-1">
+                                        <p className="text-white font-medium">{participant.name}</p>
+                                        <p className="text-blue-300 text-sm">{participant.email}</p>
+                                    </div>
+                                    <span className="px-2 py-1 bg-blue-700/50 text-xs text-blue-200 rounded-full">
+                                        {participant.role}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </motion.div>
+
                 {/* Action Points Section */}
                 <motion.div 
                     className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl 
@@ -275,130 +393,108 @@ export default function MeetingDetail() {
                     </div>
                 </motion.div>
 
-                {/* Participants Section */}
-                <motion.div 
-                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 shadow-xl 
-                             border border-white/10"
-                >
-                    <h2 className="text-xl font-semibold text-white mb-4">Participants</h2>
-                    <div className="grid gap-3">
-                        {meeting.participants?.map((participant, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex justify-between items-center p-3 
-                                         bg-blue-800/30 rounded-lg border border-blue-700/50"
-                            >
-                                <span className="font-medium text-white">{participant.name}</span>
-                                <span className="text-blue-200">{participant.email}</span>
-                            </motion.div>
-                        ))}
+                {/* Add Action Point Modal */}
+                {showAddActionPoint && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-xl 
+                                     border border-white/10 max-w-md w-full mx-4"
+                        >
+                            <h3 className="text-xl font-semibold text-white mb-4">Add Action Point</h3>
+                            <form onSubmit={handleAddActionPoint} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-blue-200 mb-1">
+                                        Description
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        className="w-full px-3 py-2 bg-blue-800/50 border border-blue-700 
+                                                 rounded-lg text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-blue-200 mb-1">
+                                        Assigned To
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="assignedTo"
+                                        className="w-full px-3 py-2 bg-blue-800/50 border border-blue-700 
+                                                 rounded-lg text-white"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-blue-200 mb-1">
+                                        Due Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="dueDate"
+                                        className="w-full px-3 py-2 bg-blue-800/50 border border-blue-700 
+                                                 rounded-lg text-white"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddActionPoint(false)}
+                                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
                     </div>
-                </motion.div>
-            </motion.div>
+                )}
 
-            {/* Add Action Point Modal */}
-            {showAddActionPoint && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <motion.div 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-xl 
-                                 border border-white/10 max-w-md w-full mx-4"
-                    >
-                        <h3 className="text-xl font-semibold text-white mb-4">Add Action Point</h3>
-                        <form onSubmit={handleAddActionPoint} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-blue-200 mb-1">
-                                    Description
-                                </label>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    className="w-full px-3 py-2 bg-blue-800/50 border border-blue-700 
-                                             rounded-lg text-white"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-blue-200 mb-1">
-                                    Assigned To
-                                </label>
-                                <input
-                                    type="text"
-                                    name="assignedTo"
-                                    className="w-full px-3 py-2 bg-blue-800/50 border border-blue-700 
-                                             rounded-lg text-white"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-blue-200 mb-1">
-                                    Due Date
-                                </label>
-                                <input
-                                    type="date"
-                                    name="dueDate"
-                                    className="w-full px-3 py-2 bg-blue-800/50 border border-blue-700 
-                                             rounded-lg text-white"
-                                    required
-                                />
-                            </div>
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddActionPoint(false)}
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-xl 
+                                     border border-white/10 max-w-md w-full mx-4"
+                        >
+                            <h3 className="text-xl font-semibold text-white mb-4">Confirm Delete</h3>
+                            <p className="text-blue-200 mb-6">
+                                Are you sure you want to delete this meeting? This action cannot be undone.
+                            </p>
+                            <div className="flex justify-end gap-3">
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => setShowDeleteConfirm(false)}
                                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
                                 >
                                     Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
+                                </motion.button>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handleDelete}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
                                 >
-                                    Add
-                                </button>
+                                    Delete
+                                </motion.button>
                             </div>
-                        </form>
-                    </motion.div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-                    <motion.div 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-xl 
-                                 border border-white/10 max-w-md w-full mx-4"
-                    >
-                        <h3 className="text-xl font-semibold text-white mb-4">Confirm Delete</h3>
-                        <p className="text-blue-200 mb-6">
-                            Are you sure you want to delete this meeting? This action cannot be undone.
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500"
-                            >
-                                Cancel
-                            </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={handleDelete}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
-                            >
-                                Delete
-                            </motion.button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
+                        </motion.div>
+                    </div>
+                )}
+            </motion.div>
         </div>
     );
 } 
