@@ -6,8 +6,9 @@ import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
 import Layout from './components/layout/Layout';
 import MeetingList from './components/meetings/MeetingList';
-import MeetingForm from './components/meetings/MeetingForm';
+import CreateMeeting from './components/meetings/CreateMeeting';
 import MeetingDetail from './components/meetings/MeetingDetail';
+import Tasks from './components/tasks/Tasks';
 import InvitationPage from './pages/InvitationPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import ErrorBoundary from './components/shared/ErrorBoundary';
@@ -53,11 +54,15 @@ const router = createBrowserRouter([
                     },
                     {
                         path: "/meetings/new",
-                        element: <MeetingForm />
+                        element: <CreateMeeting />
                     },
                     {
                         path: "/meetings/:id",
                         element: <MeetingDetail />
+                    },
+                    {
+                        path: "/tasks",
+                        element: <Tasks />
                     }
                 ]
             }

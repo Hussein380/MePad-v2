@@ -57,6 +57,8 @@ export const meetings = {
     delete: (id) => api.delete(`/meetings/${id}`),
     updateActionPoint: (meetingId, actionId, data) => 
         api.put(`/meetings/${meetingId}/action-points/${actionId}`, data),
+    updateActionPointStatus: (meetingId, actionId, status) => 
+        api.put(`/meetings/${meetingId}/action-points/${actionId}`, { status }),
     addActionPoint: (meetingId, actionPoint) => 
         api.post(`/meetings/${meetingId}/action-points`, actionPoint),
     deleteActionPoint: (meetingId, actionId) => 

@@ -53,6 +53,17 @@ exports.getDashboard = asyncHandler(async (req, res) => {
             })))
         .slice(0, 5);
 
+    // Get action points specifically assigned to the current user
+    const myAssignedActions = allMeetings
+        .flatMap(meeting => meeting.actionPoints
+            .filter(ap => ap.assignedTo === user.email && ap.status === 'pending')
+            .map(ap => ({
+                ...ap.toObject(),
+                meetingTitle: meeting.title,
+                meetingId: meeting._id
+            })))
+        .slice(0, 5);
+
     // Get meetings where user is invited as a participant
     const invitedMeetings = participatingMeetings.slice(0, 5);
 
@@ -63,6 +74,7 @@ exports.getDashboard = asyncHandler(async (req, res) => {
             recentMeetings,
             upcomingMeetings,
             pendingActions,
+            myAssignedActions,
             invitedMeetings
         }
     });
